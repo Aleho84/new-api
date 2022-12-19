@@ -21,26 +21,22 @@ passport.use('signin', new LocalStrategy(
         let msg = null
 
         if (!req.body.name) {
-            msg = `[USERS]: Signin fail, the name is missing`
-        } else if (!req.body.email) {
-            msg = `[USERS]: Signin fail, the email is missing`
-        } else if (!req.body.password) {
-            msg = `[USERS]: Signin fail, the password is missing`
+            msg = `Signin fail, the name is missing`
         } else if (!(passCheck(req.body.password))) {
-            msg = `[USERS]: Signin fail, the password must be at least 6 characters`
+            msg = `Signin fail, the password must be at least 6 characters`
         } else if (!req.body.image) {
-            msg = `[USERS]: Signin fail, the image is missing`
+            msg = `Signin fail, the image is missing`
         }
 
         if (msg) {
-            logger.warn(msg)
+            logger.warn(`[USERS]: ${msg}`)
             return done(null, false, { message: msg })
         }
 
         const user = await usersDao.findByEmail(email)
         if (user) { 
-            msg = `[USERS]: Signin fail, ${email} already exists` 
-            logger.warn(msg)
+            msg = `Signin fail, ${email} already exists` 
+            logger.warn(`[USERS]: ${msg}`)
             return done(null, false, { message: msg })
         }
 
@@ -48,8 +44,8 @@ passport.use('signin', new LocalStrategy(
         nuevoUsuario.token = tokenGenerate(nuevoUsuario)
         req.body.password = await encryptPassword(password)
 
-        msg = `[USERS]: User ${email} signin susscefuly`
-        logger.info(msg)
+        msg = `User ${email} signin susscefuly`
+        logger.info(`[USERS]: ${msg}`)
 
         return done(null, nuevoUsuario)
     }
@@ -62,25 +58,29 @@ passport.use('login', new LocalStrategy(
         passReqToCallback: true,
     },
     async (req, email, password, done) => {
-        const user = await usersDao.findByEmail(email)
-        if (!user) {
-            const msg = `[USERS]: Login fail, user ${email} don't exist`
-            logger.warn(msg)
-            return done(null, false, { message: msg })
+        try {
+            const user = await usersDao.findByEmail(email)
+            if (!user) {
+                const msg = `Login fail, user ${email} don't exist`
+                logger.warn(`[USERS]: ${msg}`)
+                return done(null, false, { message: msg })
+            }
+            const isTruePassword = await comparePassword(password, user.password)
+            if (!isTruePassword) {
+                const msg = `Login fail, wrong password for user ${email}`
+                logger.warn(`[USERS]: ${msg}`)
+                return done(null, false, { message: msg })
+            }
+    
+            user.token = tokenGenerate(user)
+    
+            const msg = `User ${email} login susscefuly`
+            logger.info(`[USERS]: ${msg}`)
+    
+            return done(null, user)            
+        } catch (error) {
+            return done(error)
         }
-        const isTruePassword = await comparePassword(password, user.password)
-        if (!isTruePassword) {
-            const msg = `[USERS]: Login fail, wrong password for user ${email}`
-            logger.warn(msg)
-            return done(null, false, { message: msg })
-        }
-
-        user.token = tokenGenerate(user)
-
-        const msg = `[USERS]: User ${email} login susscefuly`
-        logger.info(msg)
-
-        return done(null, user)
     }
 ))
 

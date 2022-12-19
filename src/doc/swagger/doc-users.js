@@ -20,6 +20,8 @@
  *       responses:
  *         "200":
  *           description: OK. Login successfully.
+ *         "400":
+ *           description: Bad Request.
  *         "401":
  *           description: Unauthorized. Login faild.
  *         "500":
@@ -48,6 +50,8 @@
  *       responses:
  *         "201":
  *           description: Created. Registry for an new user successfully.
+ *         "400":
+ *           description: Bad Request.
  *         "500":
  *           description: Internal Server Error.
  */

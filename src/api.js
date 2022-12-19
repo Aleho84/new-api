@@ -81,11 +81,17 @@ if (cluster.isPrimary && RUN_MODE === 'cluster') {
 
     // error handler
     app.use(function (err, req, res, next) {
-        // solo da detalles del error en modo "development"
-        res.locals.message = err.message
-        res.locals.error = process.env.NODE_ENV === 'development' ? err : {}
+        // solo da detalles del error en modo "development"        
         res.status(err.status || 500)
-        res.render('error')
+        if (NODE_ENV === 'development') {
+            res.json({ message: err.message })
+        } else {
+            res.json({
+                message: err.message,
+                status: err.status,
+                stack: err.stack
+            })
+        }
     })
 
     // ROUTES
